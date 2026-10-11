@@ -12,3 +12,7 @@ It is a theremin with a 3D cone visualization.
 
 - The 3D structure is programmed manually - each point calculates its position on a 2D canvas, where they are then connected to form a cone.
 - The canvas is rendered using the Canvas API and the audio using the Web Audio API.
+
+## Building
+ 
+-To try it out, simply open the 'dist' folder and double-click the 'index' file, or paste the 'uri' content into your browser! :3
