@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<body style="margin:0;background-color:black;">
+<canvas id="c"></canvas>
+<script>
+const c = document.getElementById('c');
+const t = c.getContext('2d');
+const W = c.width = innerWidth;
+const H = c.height = innerHeight;
+let x = 0;
+let mx = .5, my = .5;
+onpointermove = e => {
+  mx = e.clientX / W;
+  my = 1 - e.clientY / H;
+};
+
+ let ac;
+ let osc;
+ let gain;
+let down = 0;
+onpointerdown = () => {
+  down = 1;
+  if (ac) return;
+  ac = new AudioContext();
+  osc = ac.createOscillator();
+  gain = ac.createGain();
+  gain.gain.value = 0;
+  osc.connect(gain);
+  gain.connect(ac.destination);
+  osc.start();
+};
+onpointerup = () => { down = 0; };
+onblur = () => { down = 0; };
+
+let B = 0;
+function proj(x, y, z) {
+  const cs = Math.cos(B), sn = Math.sin(B);
+  const x1 = x * cs + z * sn;
+  const z1 = -x * sn + z * cs;
+  const ct = Math.cos(.4), st = Math.sin(.4);
+  const y2 = y * ct - z1 * st;
+  const z2 = y * st + z1 * ct;
+  const k = Math.min(W, H) * .9 / (4 + z2);
+  return [W / 2 + x1 * k, H / 2 - y2 * k];
+}
+
+const N = 24;
+function draw(r, h) {
+  const apex = proj(0, h, 0);
+  const P = [];
+  for (let i = 0; i < N; i++) {
+    const a = i / N * Math.PI * 2;
+    P.push(proj(r * Math.cos(a), -h, r * Math.sin(a)));
+  }
+  t.beginPath();
+  for (let i = 0; i < N; i++) {
+    const j = (i + 1) % N;
+    t.moveTo(...P[i]); t.lineTo(...P[j]);
+    t.moveTo(...P[i]); t.lineTo(...apex);
+  }
+  t.stroke();
+}
+
+function frame() {
+  t.fillStyle = 'rgba(0,0,0,.25)';
+  t.fillRect(0, 0, W, H);
+  B += .02 + mx *.04;
+  const f = 110 * 2 ** (mx * 4);
+  const r = .3 + mx * .9;
+  const h = .3 + my * .9;
+  if (osc) {
+    osc.frequency.setTargetAtTime(f, ac.currentTime, .05);
+    gain.gain.setTargetAtTime(down ? my * .3 : 0, ac.currentTime, .05);
+  }
+
+  t.strokeStyle = 'hsl(' + (200 + mx * 160) + ',100%,60%)';
+  t.lineWidth = 2;
+  draw(r, h);
+
+  t.fillStyle = '#fff';
+  t.font = '20px monospace';
+  t.fillText(down ? Math.round(f) + ' Hz' : 'HoldForSound', 20, 40);
+
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+</body>
+</html>
